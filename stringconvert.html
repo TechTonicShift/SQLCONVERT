@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Query Processor</title>
+    <style>
+        .copied {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>SQL Query Processor</h1>
+
+    <!-- First Form for Processing Specific Key-Value Pairs -->
+    <div>
+        <h2>Process COLNO ROWNO ERRNO type queries</h2>
+        <form id="queryForm1">
+            <label for="queryInput1">Enter your query:</label><br>
+            <input type="text" id="queryInput1" name="queryInput1" size="100"><br><br>
+            <input type="submit" value="Process Query">
+        </form>
+        <h3>Processed Query:</h3>
+        <p id="output1"></p>
+        <button id="copyButton1">Copy to Clipboard</button>
+    </div>
+
+    <!-- Second Form for Trimming ERRNO and SEQUENCE Queries -->
+    <div>
+        <h2>Process ERRNO and SEQUENCE Queries</h2>
+        <form id="queryForm2">
+            <label for="queryInput2">Enter your query:</label><br>
+            <input type="text" id="queryInput2" name="queryInput2" size="100"><br><br>
+            <input type="submit" value="Process Query">
+        </form>
+        <h3>Processed Query:</h3>
+        <p id="output2"></p>
+        <button id="copyButton2">Copy to Clipboard</button>
+    </div>
+
+    <script>
+        class SQLQueryProcessor {
+            // Process queries with specific key-value pairs
+            static processKeyValuePairs(query) {
+                const beforeRC = query.substring(0, query.indexOf("{>RC}") + 5);
+                const afterRC = query.substring(query.indexOf("{PR<}") + 5, query.lastIndexOf("{>PR}"));
+                
+                let result = beforeRC + "{PR<}";
+
+                // Split the key-value pairs and retain the needed ones
+                const pairs = afterRC.split(",");
+                for (let pair of pairs) {
+                    pair = pair.trim();
+                    if (pair.startsWith("COUNTRYCODE") || pair.startsWith("PlUID")) {
+                        result += pair + "%,";
+                    }
+                }
+
+                // Remove the trailing comma if exists
+                if (result.endsWith(",")) {
+                    result = result.slice(0, -1);
+                }
+
+                return result;
+            }
+
+            // Process queries with ERRNO and SEQUENCE
+            static processErrnoSequence(query) {
+                // Check if the query contains both ERRNO and SEQUENCE
+                if (query.includes("ERRNO") && query.includes("SEQUENCE")) {
+                    const rcIndex = query.indexOf("{>RC}");
+                    if (rcIndex !== -1) {
+                        // Trim the string after "{>RC}" and append a " %" (note the space before %)
+                        return query.substring(0, rcIndex) + " %";
+                    }
+                }
+                
+                // If no trimming is needed, return the original query
+                return query;
+            }
+        }
+
+        document.getElementById('queryForm1').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting the traditional way
+            const queryInput = document.getElementById('queryInput1').value;
+            const output = SQLQueryProcessor.processKeyValuePairs(queryInput);
+            document.getElementById('output1').textContent = output;
+        });
+
+        document.getElementById('copyButton1').addEventListener('click', function() {
+            const outputText = document.getElementById('output1').textContent;
+            navigator.clipboard.writeText(outputText).then(function() {
+                const copyButton = document.getElementById('copyButton1');
+                copyButton.classList.add('copied');
+                copyButton.textContent = 'Copied!';
+                setTimeout(function() {
+                    copyButton.classList.remove('copied');
+                    copyButton.textContent = 'Copy to Clipboard';
+                }, 2000);
+            }).catch(function(error) {
+                console.error('Error copying to clipboard: ', error);
+            });
+        });
+
+        document.getElementById('queryForm2').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting the traditional way
+            const queryInput = document.getElementById('queryInput2').value;
+            const output = SQLQueryProcessor.processErrnoSequence(queryInput);
+            document.getElementById('output2').textContent = output;
+        });
+
+        document.getElementById('copyButton2').addEventListener('click', function() {
+            const outputText = document.getElementById('output2').textContent;
+            navigator.clipboard.writeText(outputText).then(function() {
+                const copyButton = document.getElementById('copyButton2');
+                copyButton.classList.add('copied');
+                copyButton.textContent = 'Copied!';
+                setTimeout(function() {
+                    copyButton.classList.remove('copied');
+                    copyButton.textContent = 'Copy to Clipboard';
+                }, 2000);
+            }).catch(function(error) {
+                console.error('Error copying to clipboard: ', error);
+            });
+        });
+    </script>
+</body>
+</html>
